@@ -1,0 +1,31 @@
+---
+virtualmachines:
+  - name: "rhel"
+    image: "rhel-10-0-07-09-25-3"
+    bootloader: efi
+    memory: "8G"
+    cores: 2
+    image_size: "60G"
+    tags:
+      - key: "AnsibleGroup"
+        value: "bastions"
+    networks:
+      - default
+    packages:
+      - podman
+      - skopeo
+      - buildah
+      - libvirt
+      - virt-install
+      - qemu-kvm
+  - name: "ops-vm"
+    image: "rhel-10-0-07-09-25-3"
+    bootloader: efi
+    memory: "4G"
+    cores: 2
+    image_size: "40G"
+    tags:
+      - key: "AnsibleGroup"
+        value: "ops_hosts"
+    networks:
+      - default

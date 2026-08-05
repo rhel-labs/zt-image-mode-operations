@@ -1,0 +1,10 @@
+---
+
+name: modules
+version: master
+
+# For labs that reference registry images in content, add an asciidoc attributes section:
+# asciidoc:
+#   attributes:
+#     rhhi-registry: 'registry.access.redhat.com/hi'
+#     ubi-registry: 'registry.access.redhat.com/ubi9'

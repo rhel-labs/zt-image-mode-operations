@@ -1,0 +1,39 @@
+= Image Mode Runtime Operations
+
+A hands-on lab for operational flexibility and troubleshooting in RHEL Image Mode.
+
+== Lab Overview
+
+Learn runtime operations including transient packages, troubleshooting /var issues, and using switch/rollback capabilities.
+
+**Duration:** 15-20 minutes
+
+**What You'll Learn:**
+
+* Installing packages transiently without permanent drift
+* Understanding /usr, /etc, and /var differences
+* Troubleshooting common /var-related issues
+* Using bootc switch and rollback
+
+== Lab Environment
+
+* **Build Host** - Pre-configured with bootc environment
+* **Operations VM** - Pre-deployed from base image
+
+== Prerequisites
+
+* Image Mode fundamentals (recommended: complete "Image Mode Fundamentals" first)
+* Basic Linux troubleshooting skills
+
+== Lab Modules
+
+1. **Lab Introduction** - Runtime operations overview
+2. **Transient Packages** - Temporary tool installation
+3. **Troubleshooting /var Issues** - Understanding filesystem differences
+4. **Testing and Rollback** - Switch operations and recovery
+
+== Related Labs
+
+* Image Mode Fundamentals (prerequisite)
+* Image Mode Security and Compliance
+* Image Mode Advanced Workflows

@@ -1,0 +1,29 @@
+---
+
+antora:
+  name: modules
+  dir: www
+  modules:
+    - name: module-01
+      label: "Lab Introduction"
+      solveButton: false
+    - name: module-02
+      label: "Transient Packages"
+      solveButton: false
+    - name: module-03
+      label: "Troubleshooting /var Issues"
+      solveButton: false
+    - name: module-04
+      label: "Testing and Rollback"
+      solveButton: false
+
+tabs:
+  - name: ">_ Build Host"
+    url: /wetty
+  - name: ">_ Operations VM"
+    command: /root/.wait_for_ops_vm.sh
+    modules:
+      - module-02
+      - module-03
+      - module-04
+

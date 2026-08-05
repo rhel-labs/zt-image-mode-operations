@@ -1,0 +1,55 @@
+= Image Mode Runtime Operations
+
+Welcome to the Runtime Operations lab for RHEL Image Mode! This lab focuses on operational flexibility and troubleshooting techniques for image mode systems.
+
+== What You'll Learn
+
+In this lab, you will:
+
+1. **Use transient packages** - Install troubleshooting tools temporarily without permanent drift
+2. **Troubleshoot /var issues** - Understand the difference between /usr, /etc, and /var in image mode
+3. **Use switch and rollback** - Change system images and recover from issues
+
+== Key Concepts
+
+=== Build Time vs Runtime
+
+Image mode encourages centralizing configuration at build time, but runtime flexibility is still needed for:
+
+* **Troubleshooting** - Installing diagnostic tools temporarily
+* **Testing** - Trying configuration changes before committing to an image
+* **Recovery** - Rolling back to known-good states
+
+=== Understanding the Filesystem
+
+Image mode systems have a unique filesystem layout:
+
+* **/usr** - Image state (read-only, replaced on update)
+* **/etc** - Local configuration (merged with image, preserved on update)
+* **/var** - Local state (never replaced, preserved across all operations)
+
+Understanding these differences is critical for troubleshooting.
+
+== Lab Environment
+
+Your lab environment includes:
+
+* **Build Host** - Pre-configured with a bootc base image
+* **Operations VM** - Pre-deployed from the base image (ready for testing)
+
+[NOTE]
+====
+This lab assumes familiarity with Image Mode fundamentals. If you're new to bootc, start with "Image Mode Fundamentals" first.
+====
+
+== Prerequisites
+
+Basic familiarity with:
+
+* RHEL Image Mode and bootc concepts
+* Linux troubleshooting
+* Text editors (nano or vim)
+
+== Ready to Begin?
+
+Click **Next** to learn about transient package installations!
