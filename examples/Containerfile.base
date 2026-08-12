@@ -1,0 +1,44 @@
+FROM registry.redhat.io/rhel10/rhel-bootc:10.1
+
+RUN dnf -y install pcp-zeroconf \
+        rsyslog \
+        tmux \
+        tuned
+
+RUN dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm
+
+RUN sed -e '/^metalink=https:\/\/mirrors.fedoraproject.org\/metalink/ s/^/#/' \
+    -e '/^#baseurl=http:/ s/http/https/' \
+    -e '/^#baseurl=https:\/\/download.example/ s/^#//' \
+    -e '/^baseurl=https:\/\/download.example/ s_https://download.example_https://dl.fedoraproject.org_' \
+    -i /etc/yum.repos.d/epel*.repos
+
+RUN dnf -y install btop iftop
+
+# Add image controlled configs
+# COPY 10-wheel /etc/sudoers.d/wheel
+# COPY console_kargs.conf /usr/lib/bootc/kargs.d/05-cloud-kargs.toml
+# COPY auth.json /etc/ostree/auth.json
+ADD etc/ /etc
+ADD usr/ /usr
+
+RUN systemctl mask bootc-fetch-apply-updates.timer
+
+# Set up some variables and labels to ID images in our environments
+MAINTAINER sysadmins@example.com
+# RHEL version inherited from bootc base as redhat.version-id and release
+LABEL vendor="Example Corp" 
+
+# Security module starts here with software requirements
+RUN dnf -y install audit fapolicyd openscap-utils scap-security-guide setroubleshoot-server
+
+LABEL profile="CIS Sever Level 1 base image"
+ENV profileID=cis_server_l1_customized
+
+COPY $profileID.xml /tmp/$profileID.xml
+RUN oscap-im --profile $profileID --tailoring-file /tmp/$profileID.xml /usr/share/xml/scap/ssg/content/ssg-rhel10-ds.xml
+RUN systemctl enable fapolicyd
+
+# Skip these in first 2 modules
+
+RUN bootc container lint

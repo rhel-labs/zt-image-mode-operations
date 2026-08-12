@@ -18,6 +18,39 @@ virtualmachines:
       - libvirt
       - virt-install
       - qemu-kvm
+      - libvirt-nss
+      - nano
+      - nginx
+      - openscap-utils
+      - scap-security-guide
+    services:
+      - name: registry-http
+        ports:
+          - port: 80
+            protocol: TCP
+            targetPort: 80
+            name: registry-http
+      - name: registry
+        ports:
+          - port: 443
+            protocol: TCP
+            targetPort: 443
+            name: registry
+    routes:
+      - name: registry-http
+        host: registry
+        service: registry-http
+        targetPort: 80
+        tls: false
+        path: "/.well-known/"
+      - name: registry
+        host: registry
+        service: registry
+        targetPort: 443
+        tls: true
+    terminals:
+      - name: wetty_ops_vm
+        command: /root/.wait_for_ops_vm.sh
   - name: "ops-vm"
     image: "rhel-10-0-07-09-25-3"
     bootloader: efi

@@ -4,8 +4,9 @@ egress:
   - ports:
       - protocol: TCP
         port: 443
-#ingress:
-# For Cockpit
-#  - ports:
-#      - protocol: TCP
-#        port: 9090
+ingress:
+  - ports:
+      - protocol: TCP
+        port: 80
+      - protocol: TCP
+        port: 443

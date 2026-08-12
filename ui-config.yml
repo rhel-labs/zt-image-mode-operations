@@ -18,10 +18,10 @@ antora:
       solveButton: false
 
 tabs:
-  - name: ">_ Build Host"
-    url: /wetty
+  - name: "Build host terminal"
+    url: /wetty/ssh/root
   - name: ">_ Operations VM"
-    command: /root/.wait_for_ops_vm.sh
+    url: /wetty_ops_vm/ssh/root
     modules:
       - module-02
       - module-03

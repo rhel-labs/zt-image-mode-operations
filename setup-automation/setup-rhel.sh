@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 USER=rhel
 
 echo "Adding wheel" > /root/post-run.log
@@ -25,11 +26,50 @@ EOF
 
 # Pull needed images
 BOOTC_RHEL_VER=10.1
-podman pull registry.redhat.io/rhel10/rhel-bootc:$BOOTC_RHEL_VER
+#podman pull registry.redhat.io/rhel10/rhel-bootc:$BOOTC_RHEL_VER
 podman pull registry.redhat.io/rhel10/bootc-image-builder:$BOOTC_RHEL_VER
+#podman pull quay.io/fedora/fedora-bootc:latest
+podman pull ghcr.io/rhel-labs/im-workshop-ops:latest
+
+# set up SSL for fully functioning registry
+dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm
+dnf install -y certbot
+
+set +x
+certbot certonly --eab-kid "${ZEROSSL_EAB_KEY_ID}" --eab-hmac-key "${ZEROSSL_HMAC_KEY}" --server "https://acme.zerossl.com/v2/DV90" --standalone --preferred-challenges http -d registry-"${GUID}"."${DOMAIN}" --non-interactive --agree-tos -m trackbot@instruqt.com -v
+rm -f /var/log/letsencrypt/letsencrypt.log
+set -x
+
+# set up http based auth for registry
+mkdir .auth
+podman run --rm --entrypoint htpasswd quay.io/hummingbird/httpd:2 -Bbn core redhat > .auth/htpasswd
+podman rmi quay.io/hummingbird/httpd:2
+
+# run a local registry with authentication and the provided certs
+podman run --privileged -d \
+  --name registry \
+  -p 443:5000 \
+  -v `pwd`/.auth:/auth:Z  \
+  -e "REGISTRY_AUTH=htpasswd" \
+  -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
+  -e "REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd" \
+  -v /etc/letsencrypt/live/registry-"${GUID}"."${DOMAIN}"/fullchain.pem:/certs/fullchain.pem \
+  -v /etc/letsencrypt/live/registry-"${GUID}"."${DOMAIN}"/privkey.pem:/certs/privkey.pem \
+  -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/fullchain.pem \
+  -e REGISTRY_HTTP_TLS_KEY=/certs/privkey.pem \
+  quay.io/mmicene/registry:2
+
+# Add name based resolution for internal IPs
+echo "10.0.2.2 rhel.${GUID}.${DOMAIN}" >> /etc/hosts
+echo "10.0.2.2 registry-${GUID}.${DOMAIN}" >> /etc/hosts
+cp /etc/hosts ~/etc/hosts
 
 # Generate SSH key
 ssh-keygen -t ed25519 -f ~/.ssh/${GUID}key -N '' -C "Lab SSH Key"
+
+podman login -u core -p redhat registry-{guid}.{domain}
+podman tag ghcr.io/rhel-labs/im-workshop-ops:latest registry-${GUID}.${DOMAIN}/bootc
+podman push registry-${GUID}.${DOMAIN}/bootc
 
 # Create config.toml
 cat <<EOF> /root/config.toml
@@ -48,7 +88,7 @@ podman run --rm --privileged --security-opt label=type:unconfined_t \
   --volume .:/output \
   registry.redhat.io/rhel10/bootc-image-builder:10.1 \
   --type qcow2 \
-  registry.redhat.io/rhel10/rhel-bootc:$BOOTC_RHEL_VER
+  registry-${GUID}.${DOMAIN}/bootc
 
 cp qcow2/disk.qcow2 /var/lib/libvirt/images/ops-vm.qcow2
 
@@ -82,6 +122,21 @@ ssh -i ~/.ssh/${GUID}key -o StrictHostKeyChecking=no core@${VM_NAME}
 SCRIPT
 
 chmod u+x /root/.wait_for_ops_vm.sh
+
+# Clone the examples directory from the lab's git repo
+EXAMPLE=examples
+TMPDIR=/tmp/lab
+git clone --single-branch --branch ${GIT_BRANCH:-main} --no-checkout --depth=1 --filter=tree:0 ${GIT_REPO} $TMPDIR
+git -C $TMPDIR sparse-checkout set --no-cone /${EXAMPLE}
+git -C $TMPDIR checkout
+if [ -d $TMPDIR/${EXAMPLE} ]; then
+    podman login -u core -p redhat registry-${GUID}.${DOMAIN} --authfile=$TMPDIR/$EXAMPLE/auth.json
+    cp -r $TMPDIR/${EXAMPLE} /root/${EXAMPLE}
+    mv $TMPDIR/${EXAMPLE} ${EXAMPLE}
+fi
+rm -rf $TMPDIR
+
+mkdir ~/scratch
 
 # Export environment variables
 echo "export GUID=${GUID}" >> /etc/profile.d/lab.sh
