@@ -26,9 +26,9 @@ EOF
 
 # Pull needed images
 BOOTC_RHEL_VER=10.1
-#podman pull registry.redhat.io/rhel10/rhel-bootc:$BOOTC_RHEL_VER
-podman pull registry.redhat.io/rhel10/bootc-image-builder:$BOOTC_RHEL_VER
-#podman pull quay.io/fedora/fedora-bootc:latest
+podman pull registry.redhat.io/rhel10/rhel-bootc:$BOOTC_RHEL_VER
+podman pull registry.redhat.io/rhel10/bootc-image-builder
+podman pull quay.io/fedora/fedora-bootc:latest
 podman pull ghcr.io/rhel-labs/im-workshop-ops:latest
 
 # set up SSL for fully functioning registry
@@ -137,6 +137,8 @@ fi
 rm -rf $TMPDIR
 
 mkdir ~/scratch
+cp -rp ~/examples/base_config_tree ~/bootc-version
+cp ~/examples/Containerfile.ops ~/bootc-version/Containerfile
 
 # Export environment variables
 echo "export GUID=${GUID}" >> /etc/profile.d/lab.sh
