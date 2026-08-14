@@ -33,7 +33,7 @@ podman pull ghcr.io/rhel-labs/im-workshop-ops:latest
 
 # set up SSL for fully functioning registry
 dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm
-dnf install -y certbot guestfs-tools
+dnf install -y certbot
 
 set +x
 certbot certonly --eab-kid "${ZEROSSL_EAB_KEY_ID}" --eab-hmac-key "${ZEROSSL_HMAC_KEY}" --server "https://acme.zerossl.com/v2/DV90" --standalone --preferred-challenges http -d registry-"${GUID}"."${DOMAIN}" --non-interactive --agree-tos -m trackbot@instruqt.com -v
@@ -68,8 +68,22 @@ cp /etc/hosts ~/etc/hosts
 ssh-keygen -t ed25519 -f ~/.ssh/${GUID}key -N '' -C "Lab SSH Key"
 
 podman login -u core -p redhat registry-{guid}.{domain}
+podman login -u core -p redhat registry-${GUID}.${DOMAIN} --authfile=/tmp/auth.json
+
 podman tag ghcr.io/rhel-labs/im-workshop-ops:latest registry-${GUID}.${DOMAIN}/bootc
 podman push registry-${GUID}.${DOMAIN}/bootc
+
+
+cat /tmp/Containerfile.lab << EOF
+FROM registry-${GUID}.${DOMAIN}/bootc
+COPY auth.json /etc/ostree/auth.json
+EOF
+pushd /tmp
+podman build -t registry-${GUID}.${DOMAIN}/bootc -f Containerfile.lab
+podman push registry-${GUID}.${DOMAIN}/bootc
+rm /tmp/Containerfile.lab
+popd
+
 
 # Create config.toml
 cat <<EOF> /root/config.toml
@@ -91,8 +105,6 @@ podman run --rm --privileged --security-opt label=type:unconfined_t \
   registry-${GUID}.${DOMAIN}/bootc
 
 cp qcow2/disk.qcow2 /var/lib/libvirt/images/ops-vm.qcow2
-podman login -u core -p redhat registry-${GUID}.${DOMAIN} --authfile=/tmp/auth.json
-virt-customize -a /var/lib/libvirt/images/ops-vm.qcow2 --copy /tmp/auth.json:/etc/ostree/auth.json 
 
 virt-install --name ops-vm \
   --disk /var/lib/libvirt/images/ops-vm.qcow2 \
