@@ -91,6 +91,8 @@ podman run --rm --privileged --security-opt label=type:unconfined_t \
   registry-${GUID}.${DOMAIN}/bootc
 
 cp qcow2/disk.qcow2 /var/lib/libvirt/images/ops-vm.qcow2
+podman login -u core -p redhat registry-${GUID}.${DOMAIN} --authfile=/tmp/auth.json
+virt-customize -a /var/lib/libvirt/images/ops-vm.qcow2 --copy /tmp/auth.json:/etc/ostree/auth.json 
 
 virt-install --name ops-vm \
   --disk /var/lib/libvirt/images/ops-vm.qcow2 \
@@ -130,7 +132,8 @@ git clone --single-branch --branch ${GIT_BRANCH:-main} --no-checkout --depth=1 -
 git -C $TMPDIR sparse-checkout set --no-cone /${EXAMPLE}
 git -C $TMPDIR checkout
 if [ -d $TMPDIR/${EXAMPLE} ]; then
-    podman login -u core -p redhat registry-${GUID}.${DOMAIN} --authfile=$TMPDIR/$EXAMPLE/auth.json
+    #podman login -u core -p redhat registry-${GUID}.${DOMAIN} --authfile=$TMPDIR/$EXAMPLE/auth.json
+    mv /tmp/auth.json $TMPDIR/$EXAMPLE/auth.json
     cp -r $TMPDIR/${EXAMPLE} /root/${EXAMPLE}
     mv $TMPDIR/${EXAMPLE} ${EXAMPLE}
 fi
@@ -138,6 +141,7 @@ rm -rf $TMPDIR
 
 mkdir ~/scratch
 cp -rp ~/examples/base_config_tree ~/bootc-version
+cp ~/examples/examples/auth.json ~/bootc-version/etc/ostree/
 cp ~/examples/Containerfile.ops ~/bootc-version/Containerfile
 
 # Export environment variables
