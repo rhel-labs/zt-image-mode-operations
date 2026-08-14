@@ -33,7 +33,7 @@ podman pull ghcr.io/rhel-labs/im-workshop-ops:latest
 
 # set up SSL for fully functioning registry
 dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm
-dnf install -y certbot
+dnf install -y certbot guestfs-tools
 
 set +x
 certbot certonly --eab-kid "${ZEROSSL_EAB_KEY_ID}" --eab-hmac-key "${ZEROSSL_HMAC_KEY}" --server "https://acme.zerossl.com/v2/DV90" --standalone --preferred-challenges http -d registry-"${GUID}"."${DOMAIN}" --non-interactive --agree-tos -m trackbot@instruqt.com -v
