@@ -74,10 +74,11 @@ podman tag ghcr.io/rhel-labs/im-workshop-ops:latest registry-${GUID}.${DOMAIN}/b
 podman push registry-${GUID}.${DOMAIN}/bootc
 
 
-cat /tmp/Containerfile.lab << EOF
+cat << EOF > /tmp/Containerfile.lab
 FROM registry-${GUID}.${DOMAIN}/bootc
 COPY auth.json /etc/ostree/auth.json
 EOF
+
 pushd /tmp
 podman build -t registry-${GUID}.${DOMAIN}/bootc -f Containerfile.lab
 podman push registry-${GUID}.${DOMAIN}/bootc
