@@ -70,12 +70,12 @@ ssh-keygen -t ed25519 -f ~/.ssh/${GUID}key -N '' -C "Lab SSH Key"
 podman login -u core -p redhat registry-{guid}.{domain}
 podman login -u core -p redhat registry-${GUID}.${DOMAIN} --authfile=/tmp/auth.json
 
-podman tag ghcr.io/rhel-labs/im-workshop-ops:latest registry-${GUID}.${DOMAIN}/bootc
-podman push registry-${GUID}.${DOMAIN}/bootc
+#podman tag ghcr.io/rhel-labs/im-workshop-ops:latest registry-${GUID}.${DOMAIN}/bootc
+#podman push registry-${GUID}.${DOMAIN}/bootc
 
 
 cat << EOF > /tmp/Containerfile.lab
-FROM registry-${GUID}.${DOMAIN}/bootc
+FROM ghcr.io/rhel-labs/im-workshop-ops:latest
 COPY auth.json /etc/ostree/auth.json
 EOF
 
