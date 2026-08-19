@@ -124,7 +124,7 @@ podman push registry-{guid}.{domain}/app-test
 [#switch-run]
 == Switch and test the image
 
-_Change to the tab labeled "Ops SSH session"_
+_Change to the tab labeled "Operations VM"_
 
 You saw earlier how `bootc` tracks the image in the registry to find updates.
 To change to a different image, use the `bootc switch` command to provide a different image specification.
@@ -261,7 +261,7 @@ podman push registry-{guid}.{domain}/app-test
 ----
 
 === Test the Workaround
-_Switch to the tab labeled "Ops SSH session"_
+_Switch to the tab labeled "Operations VM"_
 
 If we were to try to use switch again, `bootc` would let us know that the image was the same so there's nothing to switch over.
 Instead we'd need to use `update` to pull in any changes to the same image.

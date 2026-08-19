@@ -201,10 +201,8 @@ fi
 rm -rf $TMPDIR
 
 mkdir ~/scratch
-#cp -rp ~/examples/base_config_tree ~/bootc-version
-cp ~/examples/examples/auth.json ~/bootc-version/etc/ostree/
-#cp ~/examples/Containerfile.ops ~/bootc-version/Containerfile
 git clone --single-branch --branch bootc https://github.com/rhel-labs/python-hostinfo.git /root/bootc-version
+cp ~/examples/examples/auth.json ~/bootc-version/etc/ostree/
 
 
 # Export environment variables
