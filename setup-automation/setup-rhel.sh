@@ -35,10 +35,30 @@ podman pull ghcr.io/rhel-labs/im-workshop-ops:latest
 dnf install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-10.noarch.rpm
 dnf install -y certbot
 
-set +x
-certbot certonly --eab-kid "${ZEROSSL_EAB_KEY_ID}" --eab-hmac-key "${ZEROSSL_HMAC_KEY}" --server "https://acme.zerossl.com/v2/DV90" --standalone --preferred-challenges http -d registry-"${GUID}"."${DOMAIN}" --non-interactive --agree-tos -m trackbot@instruqt.com -v
-rm -f /var/log/letsencrypt/letsencrypt.log
-set -x
+CERT_DIR="/etc/letsencrypt/live/registry-${GUID}.${DOMAIN}"
+CERT_MAX_RETRIES=3
+CERT_RETRY=0
+while [ $CERT_RETRY -lt $CERT_MAX_RETRIES ]; do
+    set +x
+    certbot certonly --eab-kid "${ZEROSSL_EAB_KEY_ID}" --eab-hmac-key "${ZEROSSL_HMAC_KEY}" --server "https://acme.zerossl.com/v2/DV90" --standalone --preferred-challenges http -d registry-"${GUID}"."${DOMAIN}" --non-interactive --agree-tos -m trackbot@instruqt.com -v
+    rm -f /var/log/letsencrypt/letsencrypt.log
+    set -x
+
+    if [ -f "$CERT_DIR/fullchain.pem" ] && [ -f "$CERT_DIR/privkey.pem" ]; then
+        echo "SSL certificates obtained successfully" >> /tmp/progress.log
+        break
+    fi
+
+    CERT_RETRY=$((CERT_RETRY + 1))
+    echo "Certificate attempt $CERT_RETRY of $CERT_MAX_RETRIES failed, retrying in 15 seconds..." >> /tmp/progress.log
+    sleep 15
+done
+
+if [ ! -f "$CERT_DIR/fullchain.pem" ] || [ ! -f "$CERT_DIR/privkey.pem" ]; then
+    echo "FATAL: Failed to obtain SSL certificates after $CERT_MAX_RETRIES attempts" >> /tmp/progress.log
+    echo "FATAL: Registry cannot start without TLS certificates. Aborting setup." >> /tmp/progress.log
+    exit 1
+fi
 
 # set up http based auth for registry
 mkdir .auth
@@ -58,6 +78,34 @@ podman run --privileged -d \
   -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/fullchain.pem \
   -e REGISTRY_HTTP_TLS_KEY=/certs/privkey.pem \
   quay.io/mmicene/registry:2
+
+# Validate registry container is running
+sleep 5
+if ! podman ps --filter name=registry --format '{{.Names}}' | grep -q registry; then
+    echo "FATAL: Registry container failed to start. Checking logs:" >> /tmp/progress.log
+    podman logs registry >> /tmp/progress.log 2>&1
+    exit 1
+fi
+
+# Validate registry is responding (401 = auth required = TLS and registry working)
+REG_MAX_RETRIES=5
+REG_RETRY=0
+while [ $REG_RETRY -lt $REG_MAX_RETRIES ]; do
+    HTTP_CODE=$(curl -sk -o /dev/null -w '%{http_code}' https://registry-${GUID}.${DOMAIN}/v2/ 2>/dev/null)
+    if [ "$HTTP_CODE" = "401" ] || [ "$HTTP_CODE" = "200" ]; then
+        echo "Registry is responding (HTTP $HTTP_CODE)" >> /tmp/progress.log
+        break
+    fi
+    REG_RETRY=$((REG_RETRY + 1))
+    echo "Registry not responding yet (HTTP $HTTP_CODE), retry $REG_RETRY of $REG_MAX_RETRIES..." >> /tmp/progress.log
+    sleep 5
+done
+
+if [ $REG_RETRY -eq $REG_MAX_RETRIES ]; then
+    echo "FATAL: Registry is not responding after $REG_MAX_RETRIES attempts. Aborting setup." >> /tmp/progress.log
+    podman logs registry >> /tmp/progress.log 2>&1
+    exit 1
+fi
 
 # Add name based resolution for internal IPs
 echo "10.0.2.2 rhel.${GUID}.${DOMAIN}" >> /etc/hosts
@@ -154,7 +202,7 @@ rm -rf $TMPDIR
 
 mkdir ~/scratch
 #cp -rp ~/examples/base_config_tree ~/bootc-version
-#cp ~/examples/examples/auth.json ~/bootc-version/etc/ostree/
+cp ~/examples/examples/auth.json ~/bootc-version/etc/ostree/
 #cp ~/examples/Containerfile.ops ~/bootc-version/Containerfile
 git clone --single-branch --branch bootc https://github.com/rhel-labs/python-hostinfo.git /root/bootc-version
 
