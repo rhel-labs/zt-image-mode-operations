@@ -67,7 +67,7 @@ cp /etc/hosts ~/etc/hosts
 # Generate SSH key
 ssh-keygen -t ed25519 -f ~/.ssh/${GUID}key -N '' -C "Lab SSH Key"
 
-podman login -u core -p redhat registry-{guid}.{domain}
+podman login -u core -p redhat registry-${GUID}.${DOMAIN}
 podman login -u core -p redhat registry-${GUID}.${DOMAIN} --authfile=/tmp/auth.json
 
 #podman tag ghcr.io/rhel-labs/im-workshop-ops:latest registry-${GUID}.${DOMAIN}/bootc
@@ -153,9 +153,11 @@ fi
 rm -rf $TMPDIR
 
 mkdir ~/scratch
-cp -rp ~/examples/base_config_tree ~/bootc-version
-cp ~/examples/examples/auth.json ~/bootc-version/etc/ostree/
-cp ~/examples/Containerfile.ops ~/bootc-version/Containerfile
+#cp -rp ~/examples/base_config_tree ~/bootc-version
+#cp ~/examples/examples/auth.json ~/bootc-version/etc/ostree/
+#cp ~/examples/Containerfile.ops ~/bootc-version/Containerfile
+git clone --single-branch --branch bootc https://github.com/rhel-labs/python-hostinfo.git /root/bootc-version
+
 
 # Export environment variables
 echo "export GUID=${GUID}" >> /etc/profile.d/lab.sh
