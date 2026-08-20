@@ -270,6 +270,9 @@ Instead we'd need to use `update` to pull in any changes to the same image.
 ----
 sudo bootc switch registry-{guid}.{domain}/app-test
 ----
+
+_Note_: If you are asked for a sudo password, enter `redaht`
+
 ....
 Image specification is unchanged.
 ....
@@ -285,9 +288,6 @@ You will see this deployment listed in `bootc status`.
 ----
 sudo bootc status
 ----
-
-_Note_: If you are asked for a sudo password, enter `redaht`
-
 ....
 ● Booted image: registry-mjghb.apps.ocpvdev01.rhdp.net/app-test
         Digest: sha256:10eb5e2ebba0e549deb43315786731ff976d544f6f682c4cf30de0f4c371a059 (amd64)
