@@ -69,10 +69,10 @@ podman rmi quay.io/hummingbird/httpd:2
 podman run --privileged -d \
   --name registry \
   -p 443:5000 \
-  -v `pwd`/.auth:/auth:Z  \
-  -e "REGISTRY_AUTH=htpasswd" \
-  -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
-  -e "REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd" \
+#  -v `pwd`/.auth:/auth:Z  \
+#  -e "REGISTRY_AUTH=htpasswd" \
+#  -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
+#  -e "REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd" \
   -v /etc/letsencrypt/live/registry-"${GUID}"."${DOMAIN}"/fullchain.pem:/certs/fullchain.pem \
   -v /etc/letsencrypt/live/registry-"${GUID}"."${DOMAIN}"/privkey.pem:/certs/privkey.pem \
   -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/fullchain.pem \
@@ -115,23 +115,23 @@ cp /etc/hosts ~/etc/hosts
 # Generate SSH key
 ssh-keygen -t ed25519 -f ~/.ssh/${GUID}key -N '' -C "Lab SSH Key"
 
-podman login -u core -p redhat registry-${GUID}.${DOMAIN}
-podman login -u core -p redhat registry-${GUID}.${DOMAIN} --authfile=/tmp/auth.json
+#podman login -u core -p redhat registry-${GUID}.${DOMAIN}
+#podman login -u core -p redhat registry-${GUID}.${DOMAIN} --authfile=/tmp/auth.json
 
-#podman tag ghcr.io/rhel-labs/im-workshop-ops:latest registry-${GUID}.${DOMAIN}/bootc
-#podman push registry-${GUID}.${DOMAIN}/bootc
-
-
-cat << EOF > /tmp/Containerfile.lab
-FROM ghcr.io/rhel-labs/im-workshop-ops:latest
-COPY auth.json /etc/ostree/auth.json
-EOF
-
-pushd /tmp
-podman build -t registry-${GUID}.${DOMAIN}/bootc -f Containerfile.lab
+podman tag ghcr.io/rhel-labs/im-workshop-ops:latest registry-${GUID}.${DOMAIN}/bootc
 podman push registry-${GUID}.${DOMAIN}/bootc
-rm /tmp/Containerfile.lab
-popd
+
+
+#cat << EOF > /tmp/Containerfile.lab
+#FROM ghcr.io/rhel-labs/im-workshop-ops:latest
+#COPY auth.json /etc/ostree/auth.json
+#EOF
+
+#pushd /tmp
+#podman build -t registry-${GUID}.${DOMAIN}/bootc -f Containerfile.lab
+#podman push registry-${GUID}.${DOMAIN}/bootc
+#rm /tmp/Containerfile.lab
+#popd
 
 
 # Create config.toml
@@ -194,7 +194,7 @@ git -C $TMPDIR sparse-checkout set --no-cone /${EXAMPLE}
 git -C $TMPDIR checkout
 if [ -d $TMPDIR/${EXAMPLE} ]; then
     #podman login -u core -p redhat registry-${GUID}.${DOMAIN} --authfile=$TMPDIR/$EXAMPLE/auth.json
-    mv /tmp/auth.json $TMPDIR/$EXAMPLE/auth.json
+#    mv /tmp/auth.json $TMPDIR/$EXAMPLE/auth.json
     cp -r $TMPDIR/${EXAMPLE} /root/${EXAMPLE}
     mv $TMPDIR/${EXAMPLE} ${EXAMPLE}
 fi
@@ -202,7 +202,7 @@ rm -rf $TMPDIR
 
 mkdir ~/scratch
 git clone --single-branch --branch bootc https://github.com/rhel-labs/python-hostinfo.git /root/bootc-version
-cp ~/examples/examples/auth.json ~/bootc-version/etc/ostree/
+#cp ~/examples/examples/auth.json ~/bootc-version/etc/ostree/
 
 
 # Export environment variables
