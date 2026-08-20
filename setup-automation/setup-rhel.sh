@@ -61,18 +61,14 @@ if [ ! -f "$CERT_DIR/fullchain.pem" ] || [ ! -f "$CERT_DIR/privkey.pem" ]; then
 fi
 
 # set up http based auth for registry
-mkdir .auth
-podman run --rm --entrypoint htpasswd quay.io/hummingbird/httpd:2 -Bbn core redhat > .auth/htpasswd
-podman rmi quay.io/hummingbird/httpd:2
+#mkdir .auth
+#podman run --rm --entrypoint htpasswd quay.io/hummingbird/httpd:2 -Bbn core redhat > .auth/htpasswd
+#podman rmi quay.io/hummingbird/httpd:2
 
-# run a local registry with authentication and the provided certs
+# run a local registry without authentication and the provided certs
 podman run --privileged -d \
   --name registry \
   -p 443:5000 \
-#  -v `pwd`/.auth:/auth:Z  \
-#  -e "REGISTRY_AUTH=htpasswd" \
-#  -e "REGISTRY_AUTH_HTPASSWD_REALM=Registry Realm" \
-#  -e "REGISTRY_AUTH_HTPASSWD_PATH=/auth/htpasswd" \
   -v /etc/letsencrypt/live/registry-"${GUID}"."${DOMAIN}"/fullchain.pem:/certs/fullchain.pem \
   -v /etc/letsencrypt/live/registry-"${GUID}"."${DOMAIN}"/privkey.pem:/certs/privkey.pem \
   -e REGISTRY_HTTP_TLS_CERTIFICATE=/certs/fullchain.pem \
@@ -114,9 +110,6 @@ cp /etc/hosts ~/etc/hosts
 
 # Generate SSH key
 ssh-keygen -t ed25519 -f ~/.ssh/${GUID}key -N '' -C "Lab SSH Key"
-
-#podman login -u core -p redhat registry-${GUID}.${DOMAIN}
-#podman login -u core -p redhat registry-${GUID}.${DOMAIN} --authfile=/tmp/auth.json
 
 podman tag ghcr.io/rhel-labs/im-workshop-ops:latest registry-${GUID}.${DOMAIN}/bootc
 podman push registry-${GUID}.${DOMAIN}/bootc
@@ -193,8 +186,6 @@ git clone --single-branch --branch ${GIT_BRANCH:-main} --no-checkout --depth=1 -
 git -C $TMPDIR sparse-checkout set --no-cone /${EXAMPLE}
 git -C $TMPDIR checkout
 if [ -d $TMPDIR/${EXAMPLE} ]; then
-    #podman login -u core -p redhat registry-${GUID}.${DOMAIN} --authfile=$TMPDIR/$EXAMPLE/auth.json
-#    mv /tmp/auth.json $TMPDIR/$EXAMPLE/auth.json
     cp -r $TMPDIR/${EXAMPLE} /root/${EXAMPLE}
     mv $TMPDIR/${EXAMPLE} ${EXAMPLE}
 fi
@@ -202,7 +193,6 @@ rm -rf $TMPDIR
 
 mkdir ~/scratch
 git clone --single-branch --branch bootc https://github.com/rhel-labs/python-hostinfo.git /root/bootc-version
-#cp ~/examples/examples/auth.json ~/bootc-version/etc/ostree/
 
 
 # Export environment variables
