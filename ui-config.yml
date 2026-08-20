@@ -8,12 +8,9 @@ antora:
       label: "Lab Introduction"
       solveButton: false
     - name: module-02
-      label: "Transient Packages"
-      solveButton: false
-    - name: module-03
       label: "Troubleshooting /var Issues"
       solveButton: false
-    - name: module-04
+    - name: module-03
       label: "Testing and Rollback"
       solveButton: false
 
@@ -25,5 +22,4 @@ tabs:
     modules:
       - module-02
       - module-03
-      - module-04
 

@@ -6,9 +6,8 @@ Welcome to the Runtime Operations lab for RHEL Image Mode! This lab focuses on o
 
 In this lab, you will:
 
-1. **Use transient packages** - Install troubleshooting tools temporarily without permanent drift
-2. **Troubleshoot /var issues** - Understand the difference between /usr, /etc, and /var in image mode
-3. **Use switch and rollback** - Change system images and recover from issues
+1. **Troubleshoot /var issues** - Understand the difference between /usr, /etc, and /var in image mode
+2. **Use switch and rollback** - Change system images and recover from issues
 
 == Key Concepts
 
@@ -52,4 +51,4 @@ Basic familiarity with:
 
 == Ready to Begin?
 
-Click **Next** to learn about transient package installations!
+Click **Next** to start troubleshooting a real-world deployment issue!
