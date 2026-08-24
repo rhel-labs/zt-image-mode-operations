@@ -1,58 +1,177 @@
-= Testing and Recovery
+= Understanding /var and tmpfiles.d
 
-In this final module, we'll test the concepts you've learned and explore the rollback capabilities of image mode systems.
+==== Local machine state vs central image state
+In an image mode system, `bootc` handles the following directories differently, which is what allows for the seamless update and rollback experience.
 
-== Quick Recap
+  * `/usr` -> image state, contents of the image will be extracted and overwrite local files
+  * `/etc` -> local configuration state, contents of the image are merged with a preference for local files
+  * `/var` -> local state, contents of the image will be ignored after the initial installation of any image
 
-You've learned how image mode handles runtime operations differently:
+Initial nginx logs and working files created during the build in `/var` are created as part of an *install* deployment.
+During a `switch` or `upgrade`, this is now *local state* meaning `bootc` won't deploy those changes to a running system.
+So the directories created by the RPM aren't created on the running host, which explains why a fresh install launches the app but a switch fails.
+This is one of the new mental models that needs to be adopted to handle image mode operations.
+This is also why user home directories are symlinked from the typical `/home` to `/var/home`, ensuring that new updates aren't overwriting user data.
+Generally, anything that needs to be permanent on the host should live in `/var` and options like symlinks are available to account for existing application behavior.
 
-* **/var differences** - Content in /var persists but isn't deployed from images
-* **tmpfiles.d** - The solution for managing /var directories that need to exist
-* **switch and rollback** - Changing system images and recovering from issues
+If `/var` is hands-off after initial provisioning, how can you account for common directories that need to be present in `/var` on all systems?
+By using `systemd tmpfiles` to manage them at boot.
 
-== Core Principles Review
+We don't expect you to handle all of these cases manually.
+Upstream packages have been moving to use `systemd tmpfiles` and `systemd sysusers` to handle user and file creation for some time.
+The introduction of image mode has put some pressure on this migration, but you can already see the `nginx` package https://src.fedoraproject.org/rpms/nginx/blob/aff374fc9038f31a53370f5779f4d03df8fbbc6d/f/nginx.tmpfiles[already has a fix upstream,window=_blank].
 
-=== Build vs Runtime Philosophy
+== Workaround with tmpfiles.d
+===== _Switch to the tab labeled "Build host terminal"_
 
-The design goal of image mode is to push as much as possible to build time:
+Let's use the upstream fix to create a local version of nginx.tmpfiles in the system location.
+This means when the new RPM lands, we can just remove this from our Containerfile and the system will continue to work as expected.
 
-* **Build time** - Centralized, version-controlled, tested
-* **Runtime** - Local customization, troubleshooting, instance-specific config
+Let's add a `heredoc` just *before* the linter in the Containerfile to create the new file for testing.
+[source,bash,role="execute",subs=attributes+]
+----
+nano Containerfile
+----
+[source,dockerfile,role="execute",subs=attributes+]
+----
+RUN <<EORUN
+    set -exuo pipefail
+    echo "d /var/lib/nginx     770 nginx root -" >> /usr/lib/tmpfiles.d/nginx.conf
+    echo "d /var/lib/nginx/tmp 770 nginx root -" >> /usr/lib/tmpfiles.d/nginx.conf
+    echo "d /var/log/nginx     711 root  root -" >> /usr/lib/tmpfiles.d/nginx.conf
+EORUN
+----
 
-However, runtime flexibility is still available when needed:
+Using the `heredoc` lets us run multiple commands as a single layer and can be very handy.
+Since this is executed during a build like any other shell `heredoc`, we need to use some `set` magic to make sure a failure here stops the build.
 
-* Local /etc configuration for instance-specific settings
-* Rollback capabilities for quick recovery
-* Switch operations for repurposing infrastructure
+We can also clean up a few of those other errors by removing the working caches from `/var` for things like `dnf` since these won't be needed after build.
 
-=== Recovery Capabilities
+[source,dockerfile,role="execute",subs=attributes+]
+----
+RUN rm /var/{cache,lib}/dnf /var/lib/rhsm /var/cache/ldconfig -rf
+----
 
-Image mode systems have built-in recovery options:
+Save the file and move on.
 
-* **Rollback** - Revert to the previous deployment
-* **Switch** - Change to a different image entirely
-* **Staged updates** - Test updates before committing
+To test that `systemd` will handle the directory creation on a switch and let the app now start, we'll build this image with a new tag.
 
-These capabilities make it safer to experiment and faster to recover from issues.
+[source,bash,role="execute",subs=attributes+]
+----
+podman build --file Containerfile --tag registry-{guid}.{domain}/app-test
+----
+Note the linter isn't complaining about `nginx` in `/var` any more.
+....
+Lint warning: var-tmpfiles: Found content in /var missing systemd tmpfiles.d entries:
+  d /var/lib/dnf 0755 root root - -
+  d /var/roothome/.cache 0755 root root - -
+  d /var/roothome/.cache/pip 0755 root root - -
+  d /var/roothome/.cache/pip/http-v2 0755 root root - -
+  d /var/roothome/.cache/pip/http-v2/0 0755 root root - -
+....
+And of course push it to the local registry:
 
-== What You've Accomplished
+[source,bash,role="execute",subs=attributes+]
+----
+podman push registry-{guid}.{domain}/app-test
+----
 
-In this lab, you've learned:
+=== Test the Workaround
+_Switch to the tab labeled "Operations VM"_
 
-✅ Why /var content from images doesn't deploy to running systems
-✅ How to use systemd tmpfiles.d for /var directories
-✅ The difference between bootc update, switch, and rollback
-✅ How to troubleshoot common image mode deployment issues
+If we were to try to use switch again, `bootc` would let us know that the image was the same so there's nothing to switch over.
+Instead we'd need to use `update` to pull in any changes to the same image.
 
-== Next Steps
+[source,bash,role="execute",subs=attributes+]
+----
+sudo bootc switch registry-{guid}.{domain}/app-test
+----
 
-Now that you understand runtime operations, you might want to explore:
+_Note_: If you are asked for a sudo password, enter `redaht`
 
-* **Security and Compliance** - Learn how to build security controls into images
-* **Advanced Workflows** - Discover derived images and team collaboration patterns
+....
+Image specification is unchanged.
+....
+How can we test the problem with switching and `/var`?
 
-== Thank You!
+=== Native roll back capabilities.
+However, there's a way we can turn back time with image mode hosts: `bootc rollback`.
+This option will swap the currently booted deployment with the most recent one, kept on disk.
+You will see this deployment listed in `bootc status`.
 
-Thank you for completing the Image Mode Runtime Operations lab!
 
-The operational flexibility of image mode - quick rollbacks, deterministic state, and easy repurposing - makes it easier to both troubleshoot issues and maintain consistent systems at scale.
+[source,bash,role="execute",subs=attributes+]
+----
+sudo bootc status
+----
+....
+● Booted image: registry-mjghb.apps.ocpvdev01.rhdp.net/app-test
+        Digest: sha256:10eb5e2ebba0e549deb43315786731ff976d544f6f682c4cf30de0f4c371a059 (amd64)
+       Version: 10.1 (2025-11-13T17:17:56Z)
+
+  Rollback image: registry-mjghb.apps.ocpvdev01.rhdp.net/base
+          Digest: sha256:d83d9f48a16e98c2d8ca2240f99ce0e2d2ffc5bc948d0434bff1810d2b58e6d5 (amd64)
+         Version: 10.1 (2025-11-13T17:30:16Z)
+....
+
+Rolling back a `bootc` deployment just tells the bootloader to boot the previous deployment.
+Reversing the logic from our filesystem discussion, swapping the deployment for an earlier one on disk means that `/etc` and `/usr` will revert to that point in time but not `/var`.
+This will put the system in the same state as we started the exercise.
+
+Use the `--apply` flag along with `rollback` to immediately switch back to the previous deployment.
+[source,bash,role="execute",subs=attributes+]
+----
+sudo bootc rollback --apply
+----
+
+After a short while, you can log back in to the virtual machine by clicking `reconnect` or using the refresh button in the tab.
+
+Looking at `bootc status`, we can see the booted image is now the `base` image and the app-test image is now the new rollback.
+[source,bash,role="execute",subs=attributes+]
+----
+sudo bootc status
+----
+....
+● Booted image: registry-mjghb.apps.ocpvdev01.rhdp.net/base
+        Digest: sha256:10eb5e2ebba0e549deb43315786731ff976d544f6f682c4cf30de0f4c371a059 (amd64)
+       Version: 10.1 (2025-11-13T17:17:56Z)
+
+  Rollback image: registry-mjghb.apps.ocpvdev01.rhdp.net/app-test
+          Digest: sha256:d83d9f48a16e98c2d8ca2240f99ce0e2d2ffc5bc948d0434bff1810d2b58e6d5 (amd64)
+         Version: 10.1 (2025-11-13T17:30:16Z)
+....
+
+We can now re-run the `switch` to test the tmpfiles creation.
+Let's use the `--apply` flag here as well and immediately execute the reboot instead of checking the status first.
+[source,bash,role="execute",subs=attributes+]
+----
+sudo bootc switch registry-{guid}.{domain}/app-test --apply
+----
+
+After a short while, you can log back in to the virtual machine by clicking `reconnect` or using the refresh button in the tab.
+
+There's no systemd warning on login, so check the status of nginx and the application.
+[source,bash,role="execute",subs=attributes+]
+----
+systemctl status nginx.service --no-pager
+----
+....
+Nov 17 17:03:33 imrhel systemd[1]: Starting nginx.service - The nginx HTTP and reverse proxy server...
+Nov 17 17:03:34 imrhel nginx[1055]: nginx: the configuration file /etc/nginx/nginx.conf syntax is ok
+Nov 17 17:03:34 imrhel nginx[1055]: nginx: configuration file /etc/nginx/nginx.conf test is successful
+Nov 17 17:03:34 imrhel systemd[1]: Started nginx.service - The nginx HTTP and reverse proxy server.
+....
+
+[source,bash,role="execute",subs=attributes+]
+----
+systemctl status info-app.service --no-pager
+----
+As a final sanity check, is the app http://hostinfo-{guid}.{domain}/[up and running?,window=_blank]
+
+The host details page is up and running on the test host. With that solved, we can start on migrating the app from the Red Hat base to our corporate baseline.
+
+
+== Core principles
+Recovering from issues with installed software without resorting to an expensive recovery process is a key benefit of the image mode operating model.
+Changing the deployed system software with a single command to easily reuse capacity makes testing faster and cheaper than the typical need to deploy a new stack.
+Knowing how changes to the filesystem are managed by `bootc` is important to navigating the differences between image mode and package mode.

@@ -6,8 +6,9 @@ Welcome to the Runtime Operations lab for RHEL Image Mode! This lab focuses on o
 
 In this lab, you will:
 
-1. **Troubleshoot /var issues** - Understand the difference between /usr, /etc, and /var in image mode
-2. **Use switch and rollback** - Change system images and recover from issues
+1. **Repurpose a host with bootc switch** - Change a running system's image and reproduce a real-world bug
+2. **Troubleshoot /var issues** - Understand the difference between /usr, /etc, and /var in image mode
+3. **Use rollback and recovery** - Roll back to known-good states and verify fixes
 
 == Key Concepts
 

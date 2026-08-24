@@ -8,9 +8,12 @@ antora:
       label: "Lab Introduction"
       solveButton: false
     - name: module-02
-      label: "Troubleshooting /var Issues"
+      label: "Repurposing a Host"
       solveButton: false
     - name: module-03
+      label: "Troubleshooting /var Issues"
+      solveButton: false
+    - name: module-04
       label: "Testing and Rollback"
       solveButton: false
 
@@ -22,4 +25,5 @@ tabs:
     modules:
       - module-02
       - module-03
+      - module-04
 
