@@ -49,9 +49,9 @@ virtualmachines:
         targetPort: 443
         tls: true
     terminals:
-      - name: wetty_ops_vm
-        command: /root/.wait_for_ops_vm.sh
-  - name: "ops-vm"
+      - name: wetty_bootc_vm
+        command: /root/.wait_for_bootc_vm.sh
+  - name: "bootc-vm"
     image: "rhel-10-0-07-09-25-3"
     bootloader: efi
     memory: "4G"
@@ -59,6 +59,6 @@ virtualmachines:
     image_size: "40G"
     tags:
       - key: "AnsibleGroup"
-        value: "ops_hosts"
+        value: "bootc_hosts"
     networks:
       - default

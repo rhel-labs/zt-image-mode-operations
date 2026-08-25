@@ -20,8 +20,8 @@ antora:
 tabs:
   - name: "Build host terminal"
     url: /wetty/ssh/root
-  - name: ">_ Operations VM"
-    url: /wetty_ops_vm/ssh/root
+  - name: ">_ Bootc VM"
+    url: /wetty_bootc_vm/ssh/root
     modules:
       - module-02
       - module-03

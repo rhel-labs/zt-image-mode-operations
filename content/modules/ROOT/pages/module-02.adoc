@@ -124,7 +124,7 @@ podman push registry-{guid}.{domain}/app-test
 [#switch-run]
 == Switch and test the image
 
-_Change to the tab labeled "Operations VM"_
+_Change to the tab labeled "Bootc VM"_
 
 You saw earlier how `bootc` tracks the image in the registry to find updates.
 To change to a different image, use the `bootc switch` command to provide a different image specification.

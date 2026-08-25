@@ -146,20 +146,20 @@ podman run --rm --privileged --security-opt label=type:unconfined_t \
   --type qcow2 \
   registry-${GUID}.${DOMAIN}/bootc
 
-cp qcow2/disk.qcow2 /var/lib/libvirt/images/ops-vm.qcow2
+cp qcow2/disk.qcow2 /var/lib/libvirt/images/bootc-vm.qcow2
 
-virt-install --name ops-vm \
-  --disk /var/lib/libvirt/images/ops-vm.qcow2 \
+virt-install --name bootc-vm \
+  --disk /var/lib/libvirt/images/bootc-vm.qcow2 \
   --import --memory 4096 --graphics none \
   --osinfo rhel10-unknown --noautoconsole --noreboot
 
-virsh start ops-vm
+virsh start bootc-vm
 
-# Wait script for ops-vm
-cat <<'SCRIPT'> /root/.wait_for_ops_vm.sh
+# Wait script for bootc-vm
+cat <<'SCRIPT'> /root/.wait_for_bootc_vm.sh
 #!/bin/bash
-echo "Waiting for VM 'ops-vm' to be running..."
-VM_NAME=ops-vm
+echo "Waiting for VM 'bootc-vm' to be running..."
+VM_NAME=bootc-vm
 while true; do
     VM_STATE=$(virsh domstate "$VM_NAME" 2>/dev/null)
     if [[ "$VM_STATE" == "running" ]]; then
@@ -177,7 +177,7 @@ done
 ssh -i ~/.ssh/${GUID}key -o StrictHostKeyChecking=no core@${VM_NAME}
 SCRIPT
 
-chmod u+x /root/.wait_for_ops_vm.sh
+chmod u+x /root/.wait_for_bootc_vm.sh
 
 # Clone the examples directory from the lab's git repo
 EXAMPLE=examples

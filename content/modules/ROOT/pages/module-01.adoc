@@ -35,7 +35,7 @@ Understanding these differences is critical for troubleshooting.
 Your lab environment includes:
 
 * **Build Host** - Pre-configured with a bootc base image
-* **Operations VM** - Pre-deployed from the base image (ready for testing)
+* **Bootc VM** - Pre-deployed from the base image (ready for testing)
 
 [NOTE]
 ====

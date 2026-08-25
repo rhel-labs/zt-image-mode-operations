@@ -18,7 +18,7 @@ Learn runtime operations including transient packages, troubleshooting /var issu
 == Lab Environment
 
 * **Build Host** - Pre-configured with bootc environment
-* **Operations VM** - Pre-deployed from base image
+* **Bootc VM** - Pre-deployed from base image
 
 == Prerequisites
 
