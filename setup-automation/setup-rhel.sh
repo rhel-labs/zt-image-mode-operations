@@ -111,20 +111,8 @@ cp /etc/hosts ~/etc/hosts
 # Generate SSH key
 ssh-keygen -t ed25519 -f ~/.ssh/${GUID}key -N '' -C "Lab SSH Key"
 
-podman tag ghcr.io/rhel-labs/im-workshop-ops:latest registry-${GUID}.${DOMAIN}/bootc
-podman push registry-${GUID}.${DOMAIN}/bootc
-
-
-#cat << EOF > /tmp/Containerfile.lab
-#FROM ghcr.io/rhel-labs/im-workshop-ops:latest
-#COPY auth.json /etc/ostree/auth.json
-#EOF
-
-#pushd /tmp
-#podman build -t registry-${GUID}.${DOMAIN}/bootc -f Containerfile.lab
-#podman push registry-${GUID}.${DOMAIN}/bootc
-#rm /tmp/Containerfile.lab
-#popd
+podman tag ghcr.io/rhel-labs/im-workshop-ops:latest registry-${GUID}.${DOMAIN}/base
+podman push registry-${GUID}.${DOMAIN}/base
 
 
 # Create config.toml
@@ -144,7 +132,7 @@ podman run --rm --privileged --security-opt label=type:unconfined_t \
   --volume .:/output \
   registry.redhat.io/rhel10/bootc-image-builder:10.1 \
   --type qcow2 \
-  registry-${GUID}.${DOMAIN}/bootc
+  registry-${GUID}.${DOMAIN}/base
 
 cp qcow2/disk.qcow2 /var/lib/libvirt/images/bootc-vm.qcow2
 
