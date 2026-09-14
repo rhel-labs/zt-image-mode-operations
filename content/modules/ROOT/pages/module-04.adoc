@@ -1,6 +1,6 @@
 = Testing and Recovery
 
-In this final module, we'll test the concepts you've learned and explore the rollback capabilities of image mode systems.
+In this final module, we'll review the concepts you've learned and explore the rollback capabilities of image mode systems.
 
 == Quick Recap
 
@@ -43,13 +43,6 @@ In this lab, you've learned:
 ✅ How to use systemd tmpfiles.d for /var directories
 ✅ The difference between bootc update, switch, and rollback
 ✅ How to troubleshoot common image mode deployment issues
-
-== Next Steps
-
-Now that you understand runtime operations, you might want to explore:
-
-* **Security and Compliance** - Learn how to build security controls into images
-* **Advanced Workflows** - Discover derived images and team collaboration patterns
 
 == Thank You!
 
